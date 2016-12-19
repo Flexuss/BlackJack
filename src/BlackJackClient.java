@@ -5,8 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -14,6 +12,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 
 /**
@@ -62,6 +61,7 @@ public class BlackJackClient extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("BlackJack");
+        textArea.setEditable(false);
         startgame.setPrefWidth(scene.getWidth());
         startgame.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -94,8 +94,6 @@ public class BlackJackClient extends Application {
                     }
                 });
                 connectToGame();
-                root.setBottom(ready);
-                root.getChildren().remove(startgame);
             }
         });
         root.setBottom(startgame);
@@ -109,6 +107,10 @@ public class BlackJackClient extends Application {
             socket=new Socket("localhost", 1234);
             inputStream=socket.getInputStream();
             outputStream=socket.getOutputStream();
+            root.setBottom(ready);
+            root.getChildren().remove(startgame);
+        } catch (ConnectException e){
+            textArea.appendText("Сервер полон или не отвечает, попробуйте подключиться позже \n");
         } catch (IOException e) {
             e.printStackTrace();
         }
