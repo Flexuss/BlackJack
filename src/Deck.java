@@ -45,16 +45,11 @@ public class Deck {
             }
             if(score>21){
                 for(int i=1;i<=aces;i++){
-                    if(score-aces*10<=21){
-                        return score-aces*10;
+                    if(score-i*10<=21){
+                        return score-i*10;
                     }
                 }
             }
         return score;
-    }
-
-    public ArrayList<Card> getDeck() {
-        shuffle();
-        return deck;
     }
 }

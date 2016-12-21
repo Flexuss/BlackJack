@@ -1,6 +1,4 @@
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -9,72 +7,184 @@ import java.util.ArrayList;
  */
 public class ClientThread extends Thread {
 
-    int user;
-    Socket socket;
-    Deck deck;
+    private int user;
+    private Socket socket;
+    private Game game;
     boolean isReady=false;
-    ArrayList<Card> hand=new ArrayList<>();
+    boolean isFinish = false;
+    private ArrayList<Card> hand=new ArrayList<>();
+    ObjectOutputStream outputStream;
+    ObjectInputStream inputStream;
 
     @Override
     public void run() {
         try {
-            InputStream inputStream=socket.getInputStream();
-            OutputStream outputStream=socket.getOutputStream();
-            byte buf[] = new byte[64*1024];
-            int r=inputStream.read(buf);
-            String ready=new String(buf,0,r);
+            String ready= (String) inputStream.readObject();
+            if(ready.equals("Exit")){
+                exitGame();
+            }
             if(ready.equals("Ready")){
+                isFinish=false;
                 isReady=true;
             }
             System.out.println("Player "+user+" is ready");
             synchronized (this) {
-                wait();
+                this.wait();
             }
-            hand.add(deck.takeCard());
+            hand.add(game.deck.takeCard());
             System.out.println(user+" take 1 card");
-            System.out.println("Send "+user+" first suit");
-            outputStream.write(hand.get(hand.size()-1).suit);
-            System.out.println("Send "+user+" first face");
-            outputStream.write(hand.get(hand.size()-1).face.getBytes());
-            hand.add(deck.takeCard());
+            System.out.println("Send "+user+" first card");
+            outputStream.writeObject(hand.get(hand.size()-1));
+            outputStream.flush();
+            hand.add(game.deck.takeCard());
             System.out.println(user+" take 2 card");
-            int score=deck.getScore(hand);
-            System.out.println("Send "+user+" second suit");
-            outputStream.write(hand.get(hand.size()-1).suit);
-            System.out.println("Send "+user+" second face");
-            outputStream.write(hand.get(hand.size()-1).face.getBytes());
+            int score=game.deck.getScore(hand);
+            System.out.println("Send "+user+" second card");
+            outputStream.writeObject(hand.get(hand.size()-1));
+            outputStream.flush();
             System.out.println("Send "+user+" score");
-            outputStream.write(score);
+            outputStream.writeObject(score);
+            outputStream.flush();
             String request="";
             while(!request.equals("Stay")) {
-                r = inputStream.read(buf);
-                request = new String(buf, 0, r);
-                if (request.equals("Hit")) {
-                    hand.add(deck.takeCard());
-                    score = deck.getScore(hand);
-                    if(score>=21){
-                        outputStream.write("Stop".getBytes());
-                    }
-                    System.out.println("Send " + user + " one more card");
-                    outputStream.write((hand.get(hand.size() - 1).suit + " " + hand.get(hand.size() - 1).face + " " + score).getBytes());
-                } else {
-                    outputStream.write("12345679".getBytes());
+                request = (String) inputStream.readObject();
+                if(request.equals("Exit")){
+                    exitGame();
                 }
+                if (request.equals("Hit")) {
+                    hand.add(game.deck.takeCard());
+                    score = game.deck.getScore(hand);
+                    System.out.println("Send " + user + " one more card");
+                    outputStream.writeObject((hand.get(hand.size() - 1)));
+                    outputStream.flush();
+                    outputStream.writeObject(score);
+                    outputStream.flush();
+                    if(score>=21){
+                        outputStream.writeObject("Stop");
+                        outputStream.flush();
+                    }else{ outputStream.writeObject("AllGood");
+                    outputStream.flush();}
+                } else {
+                    isFinish=true;
+                    synchronized (this){
+                        this.wait();
+                    }
+                    getResult();
+                    isReady=false;
+                    hand.clear();
+//                    int dealerScore=game.dealer.score;
+//                    outputStream.writeObject(dealerScore);
+//                    if(dealerScore<=21){
+//                        if(score<=21) {
+//                            if (score > dealerScore) {
+//                                outputStream.writeObject("Вы выиграли");
+//                            } else outputStream.writeObject("Вы проиграли");
+//                            if(score==dealerScore){
+//                                outputStream.writeObject("Ничья");
+//                            }
+//                        }else outputStream.writeObject("Вы проиграли");
+//                    }else if(score<=21){
+//                        outputStream.writeObject("Вы выиграли");
+//                    }else outputStream.writeObject("Ничья");
+                }
+            }
+            request= (String) inputStream.readObject();
+            if(request.equals("Exit")){
+                exitGame();
+            }else if(request.equals("Restart")){
+                restartGame();
             }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
-
     }
 
-    public ClientThread(int user, Socket socket) {
+    ClientThread(int user, Socket socket) {
         this.user=user;
         this.socket=socket;
+        try {
+            outputStream=new ObjectOutputStream(socket.getOutputStream());
+            inputStream=new ObjectInputStream(socket.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void setDeck(Deck deck) {
-        this.deck = deck;
+    void setGame(Game game) {
+        this.game = game;
+    }
+
+    void getResult(){
+        int dealerScore=game.dealer.score;
+        int score=game.deck.getScore(hand);
+        try {
+            outputStream.writeObject(dealerScore);
+            outputStream.flush();
+            if (dealerScore <= 21) {
+                if (score <= 21) {
+                    if (score > dealerScore) {
+                        outputStream.writeObject("Вы выиграли");
+                        outputStream.flush();
+                    } else
+                    if (score == dealerScore) {
+                        outputStream.writeObject("Ничья");
+                        outputStream.flush();
+                    }else{ outputStream.writeObject("Вы проиграли");
+                    outputStream.flush();}
+                } else {outputStream.writeObject("Вы проиграли");outputStream.flush();}
+            } else if (score <= 21) {
+                outputStream.writeObject("Вы выиграли");
+                outputStream.flush();
+            } else{ outputStream.writeObject("Ничья");
+                outputStream.flush();}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void exitGame(){
+        try {
+            game.removePlayer(this);
+            socket.close();
+            inputStream.close();
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void restartGame(){
+        this.run();
+    }
+
+    void sendFull(){
+        try {
+            outputStream.writeObject("Full");
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void sendWait(){
+        try {
+            outputStream.writeObject("Wait");
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void sendSuccess(){
+        try {
+            outputStream.writeObject("Success");
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
