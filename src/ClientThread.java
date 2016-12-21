@@ -31,6 +31,7 @@ public class ClientThread extends Thread {
             synchronized (this) {
                 this.wait();
             }
+            //take first 2 card
             hand.add(game.deck.takeCard());
             System.out.println(user+" take 1 card");
             System.out.println("Send "+user+" first card");
@@ -45,6 +46,7 @@ public class ClientThread extends Thread {
             System.out.println("Send "+user+" score");
             outputStream.writeObject(score);
             outputStream.flush();
+            //waiting for requests
             String request="";
             while(!request.equals("Stay")) {
                 request = (String) inputStream.readObject();
@@ -52,6 +54,7 @@ public class ClientThread extends Thread {
                     exitGame();
                 }
                 if (request.equals("Hit")) {
+                    //take one more card
                     hand.add(game.deck.takeCard());
                     score = game.deck.getScore(hand);
                     System.out.println("Send " + user + " one more card");
@@ -65,6 +68,7 @@ public class ClientThread extends Thread {
                     }else{ outputStream.writeObject("AllGood");
                     outputStream.flush();}
                 } else {
+                    //end turn
                     isFinish=true;
                     synchronized (this){
                         this.wait();
@@ -113,7 +117,7 @@ public class ClientThread extends Thread {
     void setGame(Game game) {
         this.game = game;
     }
-
+    //send result
     private void getResult(){
         int dealerScore=game.dealer.score;
         int score=game.deck.getScore(hand);
@@ -141,7 +145,7 @@ public class ClientThread extends Thread {
             e.printStackTrace();
         }
     }
-
+    //disconnecting from server
     private void exitGame(){
         try {
             game.removePlayer(this);
@@ -152,11 +156,11 @@ public class ClientThread extends Thread {
             e.printStackTrace();
         }
     }
-
+    //play new game
     private void restartGame(){
         this.run();
     }
-
+    //message "game is full wait or reconnect
     void sendFull(){
         try {
             outputStream.writeObject("Full");
@@ -165,7 +169,7 @@ public class ClientThread extends Thread {
             e.printStackTrace();
         }
     }
-
+    //message about connecting to already started game
     void sendWait(){
         try {
             outputStream.writeObject("Wait");
@@ -174,7 +178,7 @@ public class ClientThread extends Thread {
             e.printStackTrace();
         }
     }
-
+    //message about connecting to game
     void sendSuccess(){
         try {
             outputStream.writeObject("Success");

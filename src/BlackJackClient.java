@@ -170,7 +170,7 @@ public class BlackJackClient extends Application {
         getGameResult(dealerScore);
         textArea.appendText(result+" \n");
     }
-
+    //Connecting to server
     private void connectToGame() {
         try {
             socket = new Socket("localhost", 1234);
@@ -202,7 +202,7 @@ public class BlackJackClient extends Application {
             e.printStackTrace();
         }
     }
-
+    //out game results
     private void getGameResult(int response){
         textArea.appendText("Счет дилера: "+response+" \n");
         restart.setPrefWidth(scene.getWidth());
