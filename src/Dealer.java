@@ -3,13 +3,13 @@ import java.util.ArrayList;
 /**
  * Created by Dmitry on 19.12.2016.
  */
-public class Dealer extends Thread {
+class Dealer extends Thread {
 
-    Deck deck;
-    ArrayList<Card> hand=new ArrayList<>();
+    private Deck deck;
+    private ArrayList<Card> hand=new ArrayList<>();
     int score=0;
 
-    public Dealer(Deck deck) {
+    Dealer(Deck deck) {
         this.deck=deck;
     }
 

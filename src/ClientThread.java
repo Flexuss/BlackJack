@@ -13,8 +13,8 @@ public class ClientThread extends Thread {
     boolean isReady=false;
     boolean isFinish = false;
     private ArrayList<Card> hand=new ArrayList<>();
-    ObjectOutputStream outputStream;
-    ObjectInputStream inputStream;
+    private ObjectOutputStream outputStream;
+    private ObjectInputStream inputStream;
 
     @Override
     public void run() {
@@ -94,11 +94,7 @@ public class ClientThread extends Thread {
             }else if(request.equals("Restart")){
                 restartGame();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -118,7 +114,7 @@ public class ClientThread extends Thread {
         this.game = game;
     }
 
-    void getResult(){
+    private void getResult(){
         int dealerScore=game.dealer.score;
         int score=game.deck.getScore(hand);
         try {
@@ -146,7 +142,7 @@ public class ClientThread extends Thread {
         }
     }
 
-    void exitGame(){
+    private void exitGame(){
         try {
             game.removePlayer(this);
             socket.close();
@@ -157,7 +153,7 @@ public class ClientThread extends Thread {
         }
     }
 
-    void restartGame(){
+    private void restartGame(){
         this.run();
     }
 

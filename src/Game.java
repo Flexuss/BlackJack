@@ -3,15 +3,15 @@ import java.util.ArrayList;
 /**
  * Created by Dmitry on 15.12.2016.
  */
-public class Game extends Thread {
+class Game extends Thread {
 
-    public ArrayList<ClientThread> clients =new ArrayList<>();
-    public ArrayList<ClientThread> waitingClients=new ArrayList<>();
+    private ArrayList<ClientThread> clients =new ArrayList<>();
+    private ArrayList<ClientThread> waitingClients=new ArrayList<>();
     Deck deck;
     Dealer dealer;
     boolean isStarted=false;
 
-    public void setStarted() {
+    private void setStarted() {
         isStarted = true;
     }
 
@@ -72,7 +72,7 @@ public class Game extends Thread {
         }else waitingClients.get(waitingClients.size()-1).sendWait();
     }
 
-    boolean allIsReady(){
+    private boolean allIsReady(){
         for(int i=0;i<clients.size();i++){
             if(!clients.get(i).isReady){
                 return false;
@@ -82,7 +82,7 @@ public class Game extends Thread {
     }
 
 
-    boolean allIsFinish(){
+    private boolean allIsFinish(){
         for(int i=0;i<clients.size();i++){
             if(!clients.get(i).isFinish){
                 return false;
@@ -99,9 +99,7 @@ public class Game extends Thread {
         }
     }
 
-    boolean isFull(){
-        if(clients.size()+waitingClients.size()-1>6){
-            return true;
-        }else return false;
+    private boolean isFull(){
+        return clients.size() + waitingClients.size() - 1 > 6;
     }
 }

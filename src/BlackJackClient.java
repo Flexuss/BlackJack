@@ -19,19 +19,19 @@ import java.net.Socket;
  */
 public class BlackJackClient extends Application {
 
-    TextArea textArea=new TextArea();
-    Socket socket;
-    ObjectInputStream inputStream;
-    ObjectOutputStream outputStream;
-    int score=0;
-    BorderPane root = new BorderPane();
-    Scene scene = new Scene(root, 500, 500);
-    Button startgame = new Button("Начать игру");
-    Button hit=new Button("Взять");
-    Button stay=new Button("Оставить");
-    Button ready = new Button("Готов");
-    Button restart=new Button("Новая игра");
-    Button quite=new Button("Выход");
+    private TextArea textArea=new TextArea();
+    private Socket socket;
+    private ObjectInputStream inputStream;
+    private ObjectOutputStream outputStream;
+    private int score=0;
+    private BorderPane root = new BorderPane();
+    private Scene scene = new Scene(root, 500, 500);
+    private Button startgame = new Button("Начать игру");
+    private Button hit=new Button("Взять");
+    private Button stay=new Button("Оставить");
+    private Button ready = new Button("Готов");
+    private Button restart=new Button("Новая игра");
+    private Button quite=new Button("Выход");
 
     public static void main(String[] args) {
         launch(args);
@@ -123,7 +123,7 @@ public class BlackJackClient extends Application {
         primaryStage.show();
     }
 
-    void play(){
+    private void play(){
         try{
         Card firstCard= (Card) inputStream.readObject();
             outCard(firstCard);
@@ -131,14 +131,12 @@ public class BlackJackClient extends Application {
             outCard(secondCard);
             score= (int) inputStream.readObject();
             textArea.appendText("Ваш счет: "+score+" \n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    void getCard(){
+    private void getCard(){
         try {
             outputStream.writeObject("Hit");
             outputStream.flush();
@@ -150,14 +148,12 @@ public class BlackJackClient extends Application {
             if (response.equals("Stop")){
                 stayhit();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    void stayhit(){
+    private void stayhit(){
         textArea.appendText("Ожидание других игроков. \n");
         hit.setDisable(true);
         stay.setDisable(true);
@@ -168,16 +164,14 @@ public class BlackJackClient extends Application {
             outputStream.flush();
             dealerScore = (int) inputStream.readObject();
             result = (String) inputStream.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         getGameResult(dealerScore);
         textArea.appendText(result+" \n");
     }
 
-    void connectToGame() {
+    private void connectToGame() {
         try {
             socket = new Socket("localhost", 1234);
             inputStream = new ObjectInputStream(socket.getInputStream());
@@ -209,7 +203,7 @@ public class BlackJackClient extends Application {
         }
     }
 
-    void getGameResult(int response){
+    private void getGameResult(int response){
         textArea.appendText("Счет дилера: "+response+" \n");
         restart.setPrefWidth(scene.getWidth());
         quite.setPrefWidth(scene.getWidth());
@@ -250,7 +244,7 @@ public class BlackJackClient extends Application {
         root.setTop(quite);
     }
 
-    void outCard(Card card){
+    private void outCard(Card card){
         String suit="";
         switch (card.suit){
             case 1: suit="Черви";
